@@ -1,4 +1,6 @@
 name: Autograding Tests
+with:
+  python-version: '3.10.13'
 'on':
 - workflow_dispatch
 - repository_dispatch
