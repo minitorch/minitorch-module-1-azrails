@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Iterable, List, Tuple
+from typing import Any, Iterable, Tuple
 
 from typing_extensions import Protocol
 
@@ -22,8 +22,10 @@ def central_difference(f: Any, *vals: Any, arg: int = 0, epsilon: float = 1e-6) 
     Returns:
         An approximation of $f'_i(x_0, \ldots, x_{n-1})$
     """
-    # TODO: Implement for Task 1.1.
-    raise NotImplementedError("Need to implement for Task 1.1")
+    return (
+        f(*vals[:arg], vals[arg] + epsilon / 2, *vals[arg + 1 :])
+        - f(*vals[:arg], vals[arg] - epsilon / 2, *vals[arg + 1 :])
+    ) / epsilon
 
 
 variable_count = 1
@@ -54,15 +56,32 @@ class Variable(Protocol):
 def topological_sort(variable: Variable) -> Iterable[Variable]:
     """
     Computes the topological order of the computation graph.
-
-    Args:
-        variable: The right-most variable
-
     Returns:
         Non-constant Variables in topological order starting from the right.
     """
-    # TODO: Implement for Task 1.4.
-    raise NotImplementedError("Need to implement for Task 1.4")
+    visited = {}
+    topological = []
+    broken = 0
+
+    def dfs(variable: Variable) -> None:
+        nonlocal broken
+        if variable.is_constant():
+            return
+        if variable.unique_id not in visited:
+            visited[variable.unique_id] = 1
+        elif visited[variable.unique_id] == 1:
+            broken = 1
+        else:
+            return
+        for p in variable.parents:
+            dfs(p)
+        visited[variable.unique_id] = 2
+        topological.append(variable)
+
+    dfs(variable)
+    if broken:
+        raise RuntimeError("Cycle in computational graph")
+    return topological
 
 
 def backpropagate(variable: Variable, deriv: Any) -> None:
@@ -76,8 +95,15 @@ def backpropagate(variable: Variable, deriv: Any) -> None:
 
     No return. Should write to its results to the derivative values of each leaf through `accumulate_derivative`.
     """
-    # TODO: Implement for Task 1.4.
-    raise NotImplementedError("Need to implement for Task 1.4")
+    topological = topological_sort(variable)
+    grads = {variable.unique_id: deriv}
+    for var in reversed(list(topological)):
+        td = grads[var.unique_id]
+        if var.is_leaf():
+            var.accumulate_derivative(td)
+            continue
+        for v, d_in in var.chain_rule(td):
+            grads[v.unique_id] = grads.get(v.unique_id, 0.0) + d_in
 
 
 @dataclass
