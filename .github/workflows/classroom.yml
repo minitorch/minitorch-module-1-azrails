@@ -24,7 +24,7 @@ jobs:
         test-name: Setup
         setup-command: |
           pip3 install -qr requirements.txt
-          pip3 install flake8==5.0.4 mypy
+          pip3 install flake8==5.0.4 mypy==1.10.0
         command: flake8 --ignore "N801, E203, E266, E501, W503, F812, E741, N803,
           N802, N806" minitorch/ tests/ project/; mypy minitorch/*
         timeout: 10
